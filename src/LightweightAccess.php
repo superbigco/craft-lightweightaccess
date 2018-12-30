@@ -123,12 +123,6 @@ class LightweightAccess extends Plugin
         );
 
         Event::on(
-            User::class,
-            User::EVENT_BEFORE_LOOKUP,
-            [self::$plugin->lightweightAccessService, 'onBeforeLookup']
-        );
-
-        Event::on(
             UsersController::class,
             UsersController::EVENT_LOGIN_FAILURE,
             [self::$plugin->lightweightAccessService, 'onLoginFailure']

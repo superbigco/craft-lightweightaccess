@@ -40,11 +40,6 @@ class LightweightAccessService extends Component
     // Public Methods
     // =========================================================================
 
-    public function onBeforeLookup(AuthenticateUserEvent $event)
-    {
-        dd($event);
-    }
-
     public function onLoginFailure(LoginFailureEvent $event)
     {
         $loginName  = (string)Craft::$app->getRequest()->getRequiredBodyParam('loginName');
