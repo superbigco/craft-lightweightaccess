@@ -1,0 +1,41 @@
+{
+    "name": "superbig/craft-lightweightaccess",
+    "description": "LDAP SSO for Craft",
+    "type": "craft-plugin",
+    "version": "1.0.0",
+    "keywords": [
+        "craft",
+        "cms",
+        "craftcms",
+        "craft-plugin",
+        "lightweight access",
+        "ldap"
+    ],
+    "support": {
+        "docs": "https://github.com/superbigco/craft-lightweightaccess/blob/master/README.md",
+        "issues": "https://github.com/superbigco/craft-lightweightaccess/issues"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Superbig",
+            "homepage": "https://superbig.co"
+        }
+    ],
+    "require": {
+        "craftcms/cms": "^3.0.0",
+        "adldap2/adldap2": "^9.1"
+    },
+    "autoload": {
+        "psr-4": {
+          "superbig\\lightweightaccess\\": "src/"
+        }
+    },
+    "extra": {
+        "name": "Lightweight Access",
+        "handle": "lightweight-access",
+        "hasCpSection": false,
+        "changelogUrl": "https://raw.githubusercontent.com/superbigco/craft-lightweightaccess/master/CHANGELOG.md",
+        "class": "superbig\\lightweightaccess\\LightweightAccess"
+    }
+}
