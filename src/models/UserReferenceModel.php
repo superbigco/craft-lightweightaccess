@@ -23,12 +23,17 @@ class UserReferenceModel extends Model
     // Public Properties
     // =========================================================================
 
+    public $id;
+    public $uid;
+    public $userId;
+    public $dateCreated;
     public $user;
     public $email;
     public $username;
     public $password;
     public $firstName;
     public $lastName;
+    public $reference;
 
     // Public Methods
     // =========================================================================
@@ -58,14 +63,19 @@ class UserReferenceModel extends Model
         return $this->user;
     }
 
+    public function getReference(): ?string
+    {
+        return $this->reference;
+    }
+
     /**
      * @inheritdoc
      */
     public function rules()
     {
         return [
-            [['email', 'username', 'password', 'firstName', 'lastName'], 'string'],
-            [['email', 'username', 'password'], 'required'],
+            [['email', 'username', 'password', 'firstName', 'lastName', 'reference'], 'string'],
+            [['email', 'username', 'password', 'reference'], 'required'],
         ];
     }
 }

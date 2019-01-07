@@ -48,6 +48,7 @@ class Settings extends Model
     public $firstNameAttribute     = 'givenName';
     public $lastNameAttribute      = 'sn';
     public $emailAttribute         = 'mail';
+    public $uniqueAttribute        = 'uid';
     public $baseDN;
     public $groupHandle;
     public $username;

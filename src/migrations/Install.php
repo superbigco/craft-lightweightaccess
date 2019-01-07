@@ -10,10 +10,7 @@
 
 namespace superbig\lightweightaccess\migrations;
 
-use superbig\lightweightaccess\LightweightAccess;
-
 use Craft;
-use craft\config\DbConfig;
 use craft\db\Migration;
 use superbig\lightweightaccess\records\UserReferenceRecord;
 
@@ -109,6 +106,17 @@ class Install extends Migration
             ),
             UserReferenceRecord::TABLE_NAME,
             'email',
+            true
+        );
+
+        $this->createIndex(
+            $this->db->getIndexName(
+                UserReferenceRecord::TABLE_NAME,
+                'reference',
+                true
+            ),
+            UserReferenceRecord::TABLE_NAME,
+            'reference',
             true
         );
     }

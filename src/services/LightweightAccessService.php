@@ -14,6 +14,7 @@ use Adldap\Adldap;
 use Adldap\Auth\BindException;
 use Adldap\Auth\PasswordRequiredException;
 use Adldap\Auth\UsernameRequiredException;
+use Adldap\Query\Builder;
 use Adldap\Query\Factory;
 use craft\db\Query;
 use craft\elements\User;
@@ -23,7 +24,9 @@ use craft\helpers\UrlHelper;
 use craft\web\Response;
 use superbig\lightweightaccess\LightweightAccess;
 use superbig\lightweightaccess\models\UserReferenceModel;
+use superbig\lightweightaccess\records\UserReferenceRecord;
 use Yii;
+use yii\db\Exception;
 use yii\web\BadRequestHttpException;
 use yii\web\Response as YiiResponse;
 
@@ -37,6 +40,49 @@ use craft\base\Component;
  */
 class LightweightAccessService extends Component
 {
+    public function getReferenceByUserId(int $userId)
+    {
+        $query = $this
+            ->_createQuery()
+            ->where('userId = :userId', [':userId' => $userId])
+            ->one();
+
+        if (!$query) {
+            return null;
+        }
+
+        return new UserReferenceModel($query);
+    }
+
+    public function getReferenceByReference(string $reference)
+    {
+        $query = $this
+            ->_createQuery()
+            ->where('reference = :reference', [':reference' => $reference])
+            ->one();
+
+        if (!$query) {
+            return null;
+        }
+
+        return new UserReferenceModel($query);
+    }
+
+    public function getUserByReference(string $reference): ?User
+    {
+        $userId = $this
+            ->_createQuery()
+            ->select(['userId'])
+            ->where('reference = :reference', [':reference' => $reference])
+            ->scalar();
+
+        if (!$userId) {
+            return null;
+        }
+
+        return Craft::$app->getUsers()->getUserById($userId);
+    }
+
     // Public Methods
     // =========================================================================
 
@@ -103,14 +149,18 @@ class LightweightAccessService extends Component
             $provider->auth()->bindAsAdministrator();
 
             try {
-                //$search = $provider->search();
-                $factory = $provider->search();
+                $lookupByUsernameOrEmail = null;
+                //$builder                 = $provider->search()->users();
+                $builder = $provider->search();
 
                 /** @var Factory $search */
-                $search = array_reduce($settings->userAttributesToSearch, function($factory, $attribute) use ($username) {
-                    /** @var Factory $factory */
-                    return $factory->orWhereEquals($attribute, $username);
-                }, $factory);
+                $search = array_reduce($settings->userAttributesToSearch, function($builder, $attribute) use ($username) {
+                    /** @var Factory $builder */
+                    return $builder->orWhereEquals($attribute, $username);
+                }, $builder);
+
+                //var_dump($search);
+                //die;
 
                 /** @var \Adldap\Models\User $ldapUser */
                 $ldapUser = $search->first();
@@ -124,15 +174,27 @@ class LightweightAccessService extends Component
 
                 if ($provider->auth()->attempt($ldapDn, $password)) {
                     //$rec     = $search->find($username);
-                    $result = (new Query())
+                    $lookupByUsernameOrEmail = (new Query())
                         ->select('id')
                         ->from('users')
                         ->where(['or', 'username = :username', 'email = :username'], [':username' => $username])
                         ->one();
 
+                    $referenceAttribute = $settings->uniqueAttribute;
+                    $ldapUserAttributes = $ldapUser->jsonSerialize();
+                    $guid               = $ldapUser->getFirstAttribute($referenceAttribute) ?? $ldapUser->getEmail();
+
+                    // var_dump($referenceAttribute);
+                    //var_dump($guid);
+                    // var_dump($ldapUser->getConvertedGuid());
+                    // var_dump($ldapUserAttributes);
+                    // die;
+
+                    $existingUser = $this->getUserByReference($guid);
+
                     //DOES USER ALREADY EXIST ON LOCAL CRAFT USER TABLE
-                    if ($result === null) { //CREATE USER IN TABLE
-                        $email     = $ldapUser->getEmail();
+                    if ($lookupByUsernameOrEmail === null && !$existingUser) { //CREATE USER IN TABLE
+                        $email     = $ldapUser->getFirstAttribute($settings->emailAttribute) ?? $ldapUser->getEmail();
                         $firstName = $ldapUser->getFirstName();
                         $lastName  = $ldapUser->getLastName();
 
@@ -142,6 +204,7 @@ class LightweightAccessService extends Component
                             'password'  => $password,
                             'firstName' => $firstName,
                             'lastName'  => $lastName,
+                            'reference' => $guid,
                         ]);
 
                         if ($user = $this->createNewUser($userReference)) {
@@ -153,8 +216,8 @@ class LightweightAccessService extends Component
                         }
                     }
                     else { // User already exists in local db
-                        $id                = $result['id'];
-                        $user              = Craft::$app->getUsers()->getUserById($id);
+                        $id                = $lookupByUsernameOrEmail['id'];
+                        $user              = $existingUser ?? Craft::$app->getUsers()->getUserById($id);
                         $user->newPassword = $password;
 
                         // @todo Log error
@@ -203,6 +266,13 @@ class LightweightAccessService extends Component
 
         if (!Craft::$app->getElements()->saveElement($user)) {
             return null;
+        }
+
+        $userReference->userId = $user->id;
+
+        // Save reference
+        if (!$this->saveReference($userReference)) {
+            // @todo log error - and prevent moving forward?
         }
 
         //$command = craft()->db->createCommand();
@@ -300,5 +370,56 @@ class LightweightAccessService extends Component
     public function goHome()
     {
         return Craft::$app->getResponse()->redirect(Craft::$app->getHomeUrl())->send();
+    }
+
+    public function _createQuery(): Query
+    {
+        return (new Query())
+            ->select([
+                'id',
+                'uid',
+                'userId',
+                'email',
+                'username',
+                'firstName',
+                'lastName',
+                'reference',
+            ])
+            ->from(UserReferenceRecord::TABLE_NAME);
+    }
+
+    public function saveReference(UserReferenceModel $reference): bool
+    {
+        if ($reference->id) {
+            $record = UserReferenceRecord::findOne($reference->id);
+
+            if (!$record) {
+                throw new Exception('Invalid user reference ID: ' . $reference->id);
+            }
+        }
+        else {
+            $record            = new UserReferenceRecord();
+            $record->setAttributes($reference->getAttributes([
+                'userId',
+                'email',
+                'username',
+                'firstName',
+                'lastName',
+                'reference',
+            ]), false);
+
+        }
+
+        if (!$reference->validate()) {
+            return false;
+        }
+
+        if (!$record->save()) {
+            $reference->addErrors($record->getErrors());
+
+            return false;
+        }
+
+        return true;
     }
 }
