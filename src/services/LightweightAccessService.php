@@ -398,7 +398,7 @@ class LightweightAccessService extends Component
             }
         }
         else {
-            $record            = new UserReferenceRecord();
+            $record = new UserReferenceRecord();
             $record->setAttributes($reference->getAttributes([
                 'userId',
                 'email',
