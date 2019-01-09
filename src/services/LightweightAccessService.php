@@ -278,27 +278,27 @@ class LightweightAccessService extends Component
         //$command = craft()->db->createCommand();
         //$grp     = $command->select('id')->from('usergroups')->where(['handle' => $settings->groupHandle])->queryRow();
 
-        $defaultGroup = LightweightAccess::$plugin->getSettings()->defaultUserGroup;
+        $defaultGroups = LightweightAccess::$plugin->getSettings()->defaultUserGroups;
 
-        if (empty($defaultGroup)) {
+        if (empty($defaultGroups)) {
             // Assign them to the default user group
             Craft::$app->getUsers()->assignUserToDefaultGroup($user);
         }
         else {
-            if (!\is_array($defaultGroup)) {
-                $defaultGroup = [$defaultGroup];
+            if (!\is_array($defaultGroups)) {
+                $defaultGroups = [$defaultGroups];
             }
 
             $groupIds = array_map(function($handle) {
                 $group = Craft::$app->getUserGroups()->getGroupByHandle($handle);
 
                 if ($group) {
-                    return $group->handle;
+                    return (int)$group->id;
                 }
-            }, $defaultGroup);
+            }, $defaultGroups);
 
             // @todo if user groups is a callable handle it there
-            Craft::$app->getUsers()->assignUserToGroups($user->id, $groupIds);
+            Craft::$app->getUsers()->assignUserToGroups($user->id, array_filter($groupIds));
         }
 
         return $user;

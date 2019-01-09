@@ -20,23 +20,24 @@ use craft\base\Model;
  * @package   LightweightAccess
  * @since     1.0.0
  *
- * @property array  $hosts
- * @property array  $userAttributesToSearch
- * @property string $firstNameAttribute
- * @property string $lastNameAttribute
- * @property string $emailAttribute
- * @property string $baseDN
- * @property string $groupHandle
- * @property string $username
- * @property string $password
- * @property int    $port
- * @property string $accountSuffix
- * @property string $accountPrefix
- * @property string $adminAccountPrefix
- * @property string $adminAccountSuffix
- * @property bool   $ssl
- * @property bool   $tls
- * @property bool   $referrals
+ * @property array        $hosts
+ * @property array        $userAttributesToSearch
+ * @property string       $firstNameAttribute
+ * @property string       $lastNameAttribute
+ * @property string       $emailAttribute
+ * @property string       $baseDN
+ * @property string       $groupHandle
+ * @property string       $username
+ * @property string       $password
+ * @property int          $port
+ * @property string       $accountSuffix
+ * @property string       $accountPrefix
+ * @property string       $adminAccountPrefix
+ * @property string       $adminAccountSuffix
+ * @property bool         $ssl
+ * @property bool         $tls
+ * @property bool         $referrals
+ * @property string|array $defaultUserGroups
  */
 class Settings extends Model
 {
@@ -61,7 +62,7 @@ class Settings extends Model
     public $ssl                    = false;
     public $tls                    = false; //['tls'
     public $referrals              = false;
-    public $defaultUserGroup;
+    public $defaultUserGroups;
 
     // Public Methods
     // =========================================================================
