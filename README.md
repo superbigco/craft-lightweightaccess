@@ -40,6 +40,7 @@ To install the plugin, follow these instructions.
 
 Some things to do, and ideas for potential features:
 
-* Release it
+* Map groups to user groups
+* Map custom fields
 
 Brought to you by [Superbig](https://superbig.co)
