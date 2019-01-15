@@ -317,7 +317,7 @@ class LightweightAccessService extends Component
      * @throws \yii\base\Exception
      * @throws \yii\base\InvalidConfigException
      */
-    public function redirectToPostedUrl($object = null, string $default = null): YiiResponse
+    public function redirectToPostedUrl($object = null, string $default = null): void
     {
         $requestService = Craft::$app->getRequest();
         $url            = $requestService->getValidatedBodyParam('redirect');
@@ -335,16 +335,16 @@ class LightweightAccessService extends Component
             $url = Craft::$app->getView()->renderObjectTemplate($url, $object);
         }
 
-        return $this->redirect($url);
+        $this->redirect($url);
     }
 
     /**
      * @inheritdoc
      * @return YiiResponse
      */
-    public function redirect($url, $statusCode = 302): YiiResponse
+    public function redirect($url, $statusCode = 302)
     {
-        if (is_string($url)) {
+        if (\is_string($url)) {
             $url = UrlHelper::url($url);
         }
 
